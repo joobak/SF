@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.deposit.mapper.DepositInfoMapper">
+
+  <resultMap id="DepositInfoMap" type="com.deposit.dto.DepositInfoDTO">
+    <id     property="num"         column="num"/>
+    <result property="account"     column="account"/>
+    <result property="name"        column="name"/>
+    <result property="depositdate" column="depositdate" javaType="java.sql.Timestamp"/>
+    <result property="flag"        column="flag"/>
+    <result property="money"       column="money"/>
+    <result property="balance"     column="balance"/>
+    <result property="memo"        column="memo"/>
+    <result property="regId"       column="reg_id"/>
+  </resultMap>
+
+  <select id="selectList"
+          parameterType="com.deposit.dto.DepositListPagingDTO"
+          resultMap="DepositInfoMap">
+    SELECT
+      num, account, name, depositdate, flag, money, balance, memo, reg_id
+    FROM depositinfo
+    <where>
+      <if test="keyword != null and keyword != '' and type != null and type != ''">
+        <choose>
+          <when test='type == "A"'>
+            account LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test='type == "N"'>
+            name LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test='type == "M"'>
+            memo LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+         <when test='type == "F"'>
+  (
+    flag = #{keyword}
+    OR flag = CASE
+        WHEN #{keyword} = '출금' THEN 'WITHDRAW'
+        WHEN #{keyword} = '입금' THEN 'DEPOSIT'
+        ELSE #{keyword}
+      END
+    OR flag LIKE CONCAT('%', #{keyword}, '%')
+  )
+</when>
+
+
+          <when test='type == "AN"'>
+            (account LIKE CONCAT('%', #{keyword}, '%')
+             OR name LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+          <when test='type == "AM"'>
+            (account LIKE CONCAT('%', #{keyword}, '%')
+             OR memo LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+          <when test='type == "NM"'>
+            (name LIKE CONCAT('%', #{keyword}, '%')
+             OR memo LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+          <when test='type == "ANM"'>
+            (account LIKE CONCAT('%', #{keyword}, '%')
+             OR name LIKE CONCAT('%', #{keyword}, '%')
+             OR memo LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+    </where>
+    ORDER BY num DESC
+    LIMIT #{size} OFFSET #{offset}
+  </select>
+
+  <!-- 전체건수 (검색조건 동일해야 함) -->
+  <select id="selectTotalCount"
+          parameterType="com.deposit.dto.DepositListPagingDTO"
+          resultType="int">
+    SELECT COUNT(*)
+    FROM depositinfo
+    <where>
+      <if test="keyword != null and keyword != '' and type != null and type != ''">
+        <choose>
+          <when test='type == "A"'>
+            account LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test='type == "N"'>
+            name LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test='type == "M"'>
+            memo LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+          <when test='type == "F"'>
+            flag LIKE CONCAT('%', #{keyword}, '%')
+          </when>
+
+          <when test='type == "AN"'>
+            (account LIKE CONCAT('%', #{keyword}, '%')
+             OR name LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+          <when test='type == "AM"'>
+            (account LIKE CONCAT('%', #{keyword}, '%')
+             OR memo LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+          <when test='type == "NM"'>
+            (name LIKE CONCAT('%', #{keyword}, '%')
+             OR memo LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+          <when test='type == "ANM"'>
+            (account LIKE CONCAT('%', #{keyword}, '%')
+             OR name LIKE CONCAT('%', #{keyword}, '%')
+             OR memo LIKE CONCAT('%', #{keyword}, '%'))
+          </when>
+        </choose>
+      </if>
+    </where>
+  </select>
+
+  <select id="selectOne" parameterType="int" resultMap="DepositInfoMap">
+    SELECT num, account, name, depositdate, flag, money, balance, memo, reg_id
+    FROM depositinfo
+    WHERE num = #{num}
+  </select>
+
+  <update id="updateEditable" parameterType="com.deposit.dto.DepositInfoDTO">
+    UPDATE depositinfo
+    SET money = #{money},
+        balance = #{balance},
+        memo = #{memo}
+    WHERE num = #{num}
+  </update>
+
+  <delete id="delete" parameterType="int">
+    DELETE FROM depositinfo WHERE num = #{num}
+  </delete>
+
+  <insert id="insert" parameterType="com.deposit.dto.DepositInfoDTO"
+          useGeneratedKeys="true" keyProperty="num">
+    INSERT INTO depositinfo (account, name, flag, money, balance, memo, reg_id)
+    VALUES (#{account}, #{name}, #{flag}, #{money}, #{balance}, #{memo}, #{regId})
+  </insert>
+
+</mapper>
